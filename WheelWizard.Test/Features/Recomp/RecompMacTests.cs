@@ -24,6 +24,90 @@ public class RecompMacTests
     }
 
     [Fact]
+    public async Task FirstInstallCreatesFrontendStateDirectorySeparateFromBackend()
+    {
+        var fs = new Testably.Abstractions.Testing.MockFileSystem();
+        var root = Path.GetFullPath(Path.Combine(Path.GetTempPath(), "ww-mac-first-install"));
+        var backend = Path.Combine(root, "WiiCompiled");
+        var statePath = Path.Combine(root, "CT-MKWII", "Recomp", "Install", "install-state.json");
+        fs.Directory.CreateDirectory(root);
+        var game = Path.Combine(root, "game.iso");
+        fs.File.WriteAllText(game, "disc");
+        var environment = Substitute.For<IRecompEnvironment>();
+        environment.GameFilePath.Returns(game);
+        environment.RetroRewindFolderPath.Returns((string?)null);
+        environment.InstallFolderPath.Returns(backend);
+        environment.BackendStateFilePath.Returns(Path.Combine(backend, "install-state.json"));
+        environment.InstallStateFilePath.Returns(statePath);
+        environment.CacheFolderPath.Returns(Path.Combine(root, "Cache"));
+        var runner = Substitute.For<IRecompProcessRunner>();
+        runner
+            .RunAsync(
+                Arg.Any<string>(),
+                Arg.Any<IReadOnlyList<string>>(),
+                Arg.Any<string?>(),
+                Arg.Any<Action<string>?>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(call =>
+            {
+                var args = call.ArgAt<IReadOnlyList<string>>(1);
+                if (call.ArgAt<string>(0) == "/usr/sbin/pkgutil")
+                {
+                    var resources = Path.Combine(args[2], "Payload", "Applications", "WiiCompiled Setup.app", "Contents", "Resources");
+                    fs.Directory.CreateDirectory(Path.Combine(resources, "workspace"));
+                    fs.File.WriteAllText(Path.Combine(resources, "setup.command"), "setup");
+                    fs.File.WriteAllText(Path.Combine(resources, "workspace", ".bundle-version"), "0.9.3");
+                }
+                else
+                {
+                    var executable = Path.Combine(backend, "Products", "WiiCompiled.app", "Contents", "MacOS", "WiiCompiled");
+                    fs.Directory.CreateDirectory(Path.GetDirectoryName(executable)!);
+                    fs.File.WriteAllText(executable, "binary");
+                }
+                return Ok(0);
+            });
+        var downloader = Substitute.For<IRecompSetupDownloader>();
+        downloader
+            .DownloadAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IProgress<int>?>(), Arg.Any<CancellationToken>())
+            .Returns(Ok());
+        var github = Substitute.For<WheelWizard.GitHub.IGitHubSingletonService>();
+        github
+            .GetReleasesAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>())
+            .Returns(
+                Ok(
+                    new List<GithubRelease>
+                    {
+                        new()
+                        {
+                            TagName = "v0.9.3",
+                            Assets =
+                            [
+                                new GithubAsset
+                                {
+                                    Name = RecompPlatform.ReleaseAssetName,
+                                    BrowserDownloadUrl = "https://example.com/setup.pkg",
+                                },
+                            ],
+                        },
+                    }
+                )
+            );
+        var hosts = new RecompSetupHostAcquirer(
+            runner,
+            downloader,
+            github,
+            fs,
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<RecompSetupHostAcquirer>.Instance
+        );
+        using var service = new RecompMacInstallService(environment, runner, downloader, hosts, fs);
+        var result = await service.InstallAsync();
+        Assert.True(result.IsSuccess, result.IsFailure ? result.Error.Message : "");
+        Assert.True(fs.File.Exists(statePath));
+        Assert.True(service.IsInstalled);
+    }
+
+    [Fact]
     public async Task ChangedCodePulRequiresRebuildAndMissingAppIsBroken()
     {
         var root = Path.Combine(Path.GetTempPath(), "ww-mac-test-" + Guid.NewGuid().ToString("N"));

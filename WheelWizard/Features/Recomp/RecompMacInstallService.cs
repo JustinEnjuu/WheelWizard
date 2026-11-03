@@ -108,6 +108,7 @@ public sealed class RecompMacInstallService(
             if (download.IsFailure)
                 return download.Error;
             fileSystem.Directory.CreateDirectory(environment.InstallFolderPath);
+            fileSystem.Directory.CreateDirectory(fileSystem.Path.GetDirectoryName(environment.InstallStateFilePath)!);
             var staged = fileSystem.Path.Combine(environment.InstallFolderPath, "Package-" + Guid.NewGuid().ToString("N"));
             try
             {
