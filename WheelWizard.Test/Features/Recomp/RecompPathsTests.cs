@@ -77,6 +77,6 @@ public class RecompPathsTests
         Assert.Equal("/support/WiiCompiled/Config.toml", paths.ConfigFilePath);
         Assert.Equal("/support/WiiCompiled/NAND", paths.PrivateNandFolderPath);
         Assert.Equal("/support/WiiCompiled/install-state.json", paths.LinuxBackendStateFilePath);
-        Assert.Equal("/first/Recomp/Install/WiiCompiled-Setup-macos.run", paths.SetupFilePath);
+        Assert.Equal("/first/Recomp/Install/WiiCompiled-Setup.pkg", paths.SetupFilePath);
     }
 }

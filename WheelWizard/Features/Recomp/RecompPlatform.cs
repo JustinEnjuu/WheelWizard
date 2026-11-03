@@ -2,14 +2,7 @@ using System.Runtime.InteropServices;
 
 namespace WheelWizard.Recomp;
 
-/// <summary>
-/// Which platforms the WiiCompiled integration runs on, and which setup asset each of them downloads.
-/// Windows drives <c>WiiCompiled-Setup.exe</c> through the v1 command-line contract. Linux drives the
-/// AppImage through its own subcommand interface (see <see cref="RecompLinuxInstallService"/>), and macOS
-/// drives the self-extracting <c>.run</c> with that same interface. Every other platform is unsupported, so
-/// <c>ISettingsManager.IsRecompModeActive()</c> is false elsewhere and nothing recomp-related is ever
-/// registered or shown.
-/// </summary>
+/// <summary>Platform support and published setup asset names for WiiCompiled.</summary>
 public static class RecompPlatform
 {
     private static readonly System.IO.Abstractions.IPath NativePath = new Testably.Abstractions.RealFileSystem().Path;
@@ -22,18 +15,17 @@ public static class RecompPlatform
     public static bool IsLinux { get; } = OperatingSystem.IsLinux() && LinuxReleaseAssetName(RuntimeInformation.OSArchitecture) is not null;
 
     /// <summary>
-    /// Whether this is a macOS build. macOS downloads <see cref="MacReleaseAssetName"/>, a self-extracting
-    /// setup for both architectures that speaks the same subcommand interface as the Linux AppImage.
+    /// Whether this is a macOS build. macOS downloads <see cref="MacReleaseAssetName"/>, a package containing the native macOS setup script and tools for both architectures.
     /// </summary>
     public static bool IsMacOS { get; } = OperatingSystem.IsMacOS();
 
-    /// <summary>Whether this platform drives the setup through its subcommand interface (Linux and macOS).</summary>
+    /// <summary>Whether this platform uses backend-owned product and user-data folders.</summary>
     public static bool UsesSubcommandSetup => IsLinux || IsMacOS;
 
     public static bool IsSupported => OperatingSystem.IsWindows() || UsesSubcommandSetup;
 
-    /// <summary>The macOS release asset, fixed by the recomp's packaging workflow. It is also the installed host's name.</summary>
-    public const string MacReleaseAssetName = "WiiCompiled-Setup-macos.run";
+    /// <summary>The macOS installer package published by the recomp packaging workflow.</summary>
+    public const string MacReleaseAssetName = "WiiCompiled-Setup.pkg";
 
     /// <summary>The name of the installed host copy inside Wheel Wizard's recomp install directory.</summary>
     public static string SetupFileName =>

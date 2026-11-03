@@ -10,8 +10,7 @@ public static class RecompExtensions
     /// Registers the Mario Kart Wii recomp frontend.
     /// The recomp only runs on Windows, Linux and macOS, so on every other platform nothing is registered
     /// at all; <c>ISettingsManager.IsRecompModeActive()</c> is false elsewhere, so nothing ever resolves
-    /// these. Windows uses the v1 setup contract; Linux and macOS share the subcommand setup, so they share
-    /// an environment and install service.
+    /// these. Windows uses the v1 setup contract; Linux uses its subcommand setup and macOS extracts a package and runs its bundled script.
     /// </summary>
     public static IServiceCollection AddRecomp(this IServiceCollection services)
     {
@@ -38,7 +37,12 @@ public static class RecompExtensions
         services.AddSingleton<IRecompRetroWfcPayloadProbe, RecompRetroWfcPayloadProbe>();
         services.AddSingleton<RecompSetupHostAcquirer>();
 
-        if (RecompPlatform.UsesSubcommandSetup)
+        if (RecompPlatform.IsMacOS)
+        {
+            services.AddSingleton<IRecompEnvironment, RecompLinuxEnvironment>();
+            services.AddSingleton<IRecompInstallService, RecompMacInstallService>();
+        }
+        else if (RecompPlatform.IsLinux)
         {
             services.AddSingleton<IRecompEnvironment, RecompLinuxEnvironment>();
             services.AddSingleton<RecompLinuxProductInspector>();
