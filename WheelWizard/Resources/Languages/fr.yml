@@ -136,7 +136,6 @@ fr:
     change: "Changer"
     view_mod: "Détails du Mod"
     save_external_mii: "Ajouter un Mii dans \"Mes Miis\""
-    view_mii: "Voir le Mii"
     duplicate: "Dupliquer"
     back: "Retour"
     unfavorite: "Retirer des favoris"
@@ -176,7 +175,6 @@ fr:
     mod_browser: "Navigateur de mods"
     mii_selector: "Sélecteur de Mii"
     mii_editor: "Éditeur de Mii"
-    mii_carousel: "Vue d'ensemble des Miis"
   text:
     made_by_string: |-
       Fait par: %{firstAuthor}
@@ -209,7 +207,6 @@ fr:
       Attention, cette page ne permet pas de rejoindre une salle directement.
       Pour rejoindre une salle spécifique, vous devez soit la rejoindre via un ami, soit espérer la rejoindre via les serveurs en ligne.
     friends_page_disclaimer: "Pour ajouter des amis, rendez-vous en jeu."
-    region_user_selection: "Ceci montre les régions dans lesquelles VOUS avez joué"
     primary_profile: "Le profil principal est utilisé en tant que référence dans Wheel Wizard"
   empty_content:
     no_profiles: "Vous devez lancer le jeu au moins une fois pour voir vos profils apparaître ici"
