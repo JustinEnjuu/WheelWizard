@@ -156,7 +156,25 @@ public sealed class RecompMacInstallService(
             arguments.AddRange(["--retro-dir", retro]);
         var hash = CodeHash();
         progress?.Report(new("Building WiiCompiled", 35));
-        var result = await runner.RunAsync("/bin/bash", arguments, null, line => progress?.Report(new(line, 50)), token);
+        string? sdkPath = null;
+        var sdk = await runner.RunAsync(
+            "/usr/bin/xcrun",
+            ["--sdk", "macosx", "--show-sdk-path"],
+            null,
+            line =>
+            {
+                if (!string.IsNullOrWhiteSpace(line))
+                    sdkPath = line.Trim();
+            },
+            token
+        );
+        if (sdk.IsFailure)
+            return sdk.Error;
+        if (sdk.Value != 0 || string.IsNullOrWhiteSpace(sdkPath))
+            return Fail("The macOS SDK could not be located. Install Xcode Command Line Tools and try again.");
+        // Configure-time preprocessors also need the SDK, outside CMake's compiler flags.
+        arguments.InsertRange(0, ["SDKROOT=" + sdkPath, "/bin/bash"]);
+        var result = await runner.RunAsync("/usr/bin/env", arguments, null, line => progress?.Report(new(line, 50)), token);
         if (result.IsFailure)
             return result.Error;
         if (result.Value != 0)

@@ -52,6 +52,13 @@ public class RecompMacTests
             .Returns(call =>
             {
                 var args = call.ArgAt<IReadOnlyList<string>>(1);
+                if (call.ArgAt<string>(0) == "/usr/bin/xcrun")
+                {
+                    call.ArgAt<Action<string>?>(3)?.Invoke("/Applications/Xcode.app/SDKs/MacOSX.sdk");
+                    return Ok(0);
+                }
+                if (call.ArgAt<string>(0) == "/usr/bin/env")
+                    Assert.Equal("SDKROOT=/Applications/Xcode.app/SDKs/MacOSX.sdk", args[0]);
                 if (call.ArgAt<string>(0) == "/usr/sbin/pkgutil")
                 {
                     var resources = Path.Combine(args[2], "Payload", "Applications", "WiiCompiled Setup.app", "Contents", "Resources");

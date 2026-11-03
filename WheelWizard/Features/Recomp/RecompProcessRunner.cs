@@ -67,7 +67,10 @@ public sealed class RecompProcessRunner(ILogger<RecompProcessRunner> logger) : I
             process.OutputDataReceived += (_, eventArgs) =>
             {
                 if (eventArgs.Data is not null)
+                {
+                    logger.LogDebug("Recomp setup stdout: {Line}", eventArgs.Data);
                     onStandardOutputLine?.Invoke(eventArgs.Data);
+                }
             };
             process.ErrorDataReceived += (_, eventArgs) =>
             {
